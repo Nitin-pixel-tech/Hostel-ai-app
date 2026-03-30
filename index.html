@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Hostel AI</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: linear-gradient(to right, #b6ec30, #f5af0d);
+      text-align: center;
+      color: rgb(250, 247, 250);
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card {
+      background: rgb(103, 100, 97);
+      color: black;
+      margin: 15px;
+      padding: 20px;
+      border-radius: 15px;
+      width: 250px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    button {
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      background: #4facfe;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #00c6ff;
+    }
+
+    input, select {
+      padding: 8px;
+      margin: 5px;
+    }
+
+    .chatbot {
+      margin-top: 80px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🏠 Smart Hostel Dashboard</h1>
+
+<div class="container">
+
+  <div class="card">
+    <h2>🍽️ Mess AI Planner</h2>
+    <button onclick="markAttendance('yes')">Yes</button>
+    <button onclick="markAttendance('no')">No</button>
+    <p id="messResult"></p>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Electricity Optimizer</h2>
+    <input type="number" id="hours" placeholder="Please Enter hours">
+    <button onclick="analyzeElectricity()">Analyze</button>
+    <p id="electricityResult"></p>
+  </div>
+
+  <div class="card">
+    <h2>🧺 Laundry Scheduler</h2>
+    <select id="slot">
+      <option>Morning</option>
+      <option>Afternoon</option>
+      <option>Evening</option>
+    </select>
+    <button onclick="bookSlot()">Book</button>
+    <p id="laundryResult"></p>
+  </div>
+
+</div>
+
+<div class="chatbot">
+  <h3>🤖 AI Assistant</h3>
+  <input type="text" id="chatInput" placeholder="Ask something...">
+  <button onclick="chat()">Send</button>
+  <p id="chatOutput"></p>
+</div>
+
+<script>
+let messCount = 0;
+
+function markAttendance(choice) {
+  if (choice === 'yes') messCount++;
+
+  document.getElementById("messResult").innerText =
+    "Expected students: " + messCount +
+    " | AI Suggestion: Adjust food quantity";
+}
+
+function analyzeElectricity() {
+  let hours = document.getElementById("hours").value;
+
+  let result = hours > 5
+    ? "⚠️ High usage! please Reduce electricity"
+    : "✅ Optimal usage";
+
+  document.getElementById("electricityResult").innerText = result;
+}
+
+function bookSlot() {
+  let slot = document.getElementById("slot").value;
+
+  document.getElementById("laundryResult").innerText =
+    "Booked: " + slot + " | AI suggests less crowded slots";
+}
+
+function chat() {
+  let input = document.getElementById("chatInput").value.toLowerCase();
+  let output = "Try asking about mess, electricity, or laundry.";
+
+  if (input.includes("mess")) {
+    output = "Mess demand is medium today.";
+  } else if (input.includes("electricity")) {
+    output = "Peak time is 8–11 PM.";
+  } else if (input.includes("laundry")) {
+    output = "Morning slots are free.";
+  }
+
+  document.getElementById("chatOutput").innerText = output;
+}
+</script>
+
+</body>
+</html>
