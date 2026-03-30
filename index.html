@@ -3,11 +3,12 @@
 <head>
   <title>Smart Hostel AI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
       font-family: Arial;
       margin: 0;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      background: linear-gradient(135deg, #1d2671, #c33764);
       color: white;
       text-align: center;
     }
@@ -28,8 +29,14 @@
       margin: 15px;
       padding: 20px;
       border-radius: 15px;
-      width: 260px;
+      width: 280px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    select, input {
+      padding: 8px;
+      margin: 5px;
+      width: 80%;
     }
 
     button {
@@ -42,122 +49,162 @@
       cursor: pointer;
     }
 
-    input, select {
-      padding: 8px;
-      margin: 5px;
-      width: 80%;
-    }
-
-    .progress {
-      background: #ccc;
-      border-radius: 10px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-
-    .progress-bar {
-      height: 10px;
-      background: #00ffcc;
-      width: 0%;
-    }
-
     .chatbox {
       margin-top: 30px;
     }
   </style>
 </head>
+
 <body>
 
-<h1>🏠 Smart Hostel Dashboard</h1>
+<h1>🏠 Smart Hostel AI Dashboard</h1>
 
 <div class="dashboard">
 
-  <!-- Mess -->
-  <div class="card">
-    <h2>🍽️ Mess Planner</h2>
-     <h2> Will You Eat Today </h2>
-    <button onclick="markAttendance('yes')">Yes</button>
-    <button onclick="markAttendance('no')">No</button>
-    <p id="messResult"></p>
-    <div class="progress"><div id="messBar" class="progress-bar"></div></div>
-  </div>
+<!-- 🍽️ Mess -->
+<div class="card">
+  <h2>🍽️ Mess Planner</h2>
 
-  <!-- Electricity -->
-  <div class="card">
-    <h2>⚡ Electricity</h2>
-    <input type="number" id="hours" placeholder="Hours used">
-    <button onclick="analyzeElectricity()">Analyze</button>
-    <p id="electricityResult"></p>
-    <div class="progress"><div id="elecBar" class="progress-bar"></div></div>
-  </div>
+  <select id="meal">
+    <option>Breakfast</option>
+    <option>Lunch</option>
+    <option>Dinner</option>
+  </select>
 
-  <!-- Laundry -->
-  <div class="card">
-    <h2>🧺 Laundry</h2>
-     <h2> Select which slot you want </h2>
-    <select id="slot">
-      <option>Morning</option>
-      <option>Afternoon</option>
-      <option>Evening</option>
-    </select>
-    <button onclick="bookSlot()">Book</button>
-    <p id="laundryResult"></p>
-  </div>
+  <select id="hunger">
+    <option>Low</option>
+    <option>Medium</option>
+    <option>High</option>
+  </select>
+
+  <button onclick="messAI()">Predict</button>
+
+  <p id="messResult"></p>
+</div>
+
+<!-- ⚡ Electricity -->
+<div class="card">
+  <h2>⚡ Electricity AI</h2>
+
+  <input type="number" id="people" placeholder="No. of people">
+
+  <select id="device">
+    <option>Light</option>
+    <option>Fan</option>
+    <option>AC</option>
+  </select>
+
+  <select id="time">
+    <option>Morning</option>
+    <option>Evening</option>
+    <option>Night</option>
+  </select>
+
+  <button onclick="electricityAI()">Analyze</button>
+
+  <p id="electricityResult"></p>
+</div>
+
+<!-- 🧺 Laundry -->
+<div class="card">
+  <h2>🧺 Laundry AI</h2>
+
+  <select id="slot">
+    <option>Morning</option>
+    <option>Afternoon</option>
+    <option>Evening</option>
+  </select>
+
+  <select id="urgency">
+    <option>Low</option>
+    <option>Medium</option>
+    <option>High</option>
+  </select>
+
+  <button onclick="laundryAI()">Optimize</button>
+
+  <p id="laundryResult"></p>
+</div>
 
 </div>
 
-<!-- Chatbot -->
+<!-- 🤖 Chatbot -->
 <div class="chatbox">
   <h3>🤖 AI Assistant</h3>
-  <input type="text" id="chatInput" placeholder="Ask something...">
+
+  <input type="text" id="chatInput" placeholder="Ask anything...">
   <button onclick="chat()">Send</button>
+
   <p id="chatOutput"></p>
 </div>
 
 <script>
-let messCount = 0;
 
-function markAttendance(choice) {
-  if (choice === 'yes') messCount++;
+// 🍽️ Mess AI
+function messAI() {
+  let meal = document.getElementById("meal").value;
+  let hunger = document.getElementById("hunger").value;
+
+  let result = "Demand Moderate";
+
+  if (hunger === "High") result = "🔥 High Demand – Increase food";
+  if (hunger === "Low") result = "⚠️ Low Demand – Reduce food";
 
   document.getElementById("messResult").innerText =
-    "Students: " + messCount;
-
-  document.getElementById("messBar").style.width =
-    Math.min(messCount * 10, 100) + "%";
+    meal + ": " + result;
 }
 
-function analyzeElectricity() {
-  let hours = document.getElementById("hours").value;
+// ⚡ Electricity AI
+function electricityAI() {
+  let people = document.getElementById("people").value;
+  let device = document.getElementById("device").value;
+  let time = document.getElementById("time").value;
 
-  let percent = Math.min(hours * 10, 100);
+  let usage = people * (device === "AC" ? 3 : device === "Fan" ? 2 : 1);
 
-  document.getElementById("elecBar").style.width = percent + "%";
+  let result = "✅ Efficient";
 
-  let result = hours > 5
-    ? "⚠️ High usage"
-    : "✅ Efficient";
+  if (usage > 6) result = "⚠️ High Usage – Reduce devices";
+  if (time === "Night" && usage > 4) result = "🔥 Peak Usage at Night";
 
   document.getElementById("electricityResult").innerText = result;
 }
 
-function bookSlot() {
+// 🧺 Laundry AI
+function laundryAI() {
   let slot = document.getElementById("slot").value;
+  let urgency = document.getElementById("urgency").value;
+
+  let suggestion = "Good time";
+
+  if (slot === "Evening") suggestion = "⚠️ Crowded time";
+  if (urgency === "High") suggestion = "🔥 Priority slot recommended";
 
   document.getElementById("laundryResult").innerText =
-    "Booked: " + slot;
+    slot + ": " + suggestion;
 }
 
+// 🤖 Chatbot
 function chat() {
   let input = document.getElementById("chatInput").value.toLowerCase();
-  let output = "Try asking about mess or electricity.";
 
-  if (input.includes("mess")) output = "Mess demand is average.";
-  if (input.includes("electricity")) output = "Peak usage is evening.";
-  if (input.includes("laundry")) output = "Morning is best.";
+  let output = "I can help with hostel management!";
+
+  if (input.includes("mess"))
+    output = "Mess demand depends on student hunger level.";
+
+  else if (input.includes("electricity"))
+    output = "Electricity peaks at night, reduce AC usage.";
+
+  else if (input.includes("laundry"))
+    output = "Morning slots are less crowded.";
+
+  else if (input.includes("help"))
+    output = "Ask about mess, electricity or laundry!";
 
   document.getElementById("chatOutput").innerText = output;
 }
+
 </script>
 
 </body>
