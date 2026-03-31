@@ -1,42 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Smart Hostel AI</title>
+  <title>Smart Hostel AI System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
-      font-family: Arial;
+      font-family: 'Poppins', sans-serif;
       margin: 0;
-      background: linear-gradient(135deg, #1d2671, #c33764);
+      background: linear-gradient(135deg, #0f2027, #2c5364);
       color: white;
       text-align: center;
     }
 
-    h1 {
-      padding: 15px;
-    }
+    h1 { margin-top: 20px; }
 
-    .dashboard {
+    .container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
+      gap: 20px;
     }
 
     .card {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      margin: 15px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(15px);
       padding: 20px;
-      border-radius: 15px;
-      width: 280px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      margin: 15px;
+      border-radius: 20px;
+      width: 320px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      transition: 0.3s;
     }
 
-    select, input {
-      padding: 8px;
+    .card:hover {
+      transform: translateY(-10px) scale(1.03);
+    }
+
+    input, select {
+      padding: 10px;
       margin: 5px;
-      width: 80%;
+      width: 90%;
+      border-radius: 5px;
+      border: none;
     }
 
     button {
@@ -44,168 +50,240 @@
       margin: 5px;
       border: none;
       border-radius: 5px;
-      background: #00c6ff;
+      background: linear-gradient(45deg, #00c6ff, #0072ff);
       color: white;
       cursor: pointer;
+      font-weight: bold;
     }
 
-    .chatbox {
-      margin-top: 30px;
+    pre {
+      text-align: left;
+      background: rgba(0,0,0,0.3);
+      padding: 10px;
+      border-radius: 10px;
+      white-space: pre-wrap;
     }
   </style>
 </head>
 
 <body>
 
-<h1>🏠 Smart Hostel AI Dashboard</h1>
+<h1>🚀 Smart Hostel AI System</h1>
+<p>AI-powered productivity & hostel management</p>
 
-<div class="dashboard">
+<div class="container">
 
-<!-- 🍽️ Mess -->
+<!-- ⏰ TIME PLANNER -->
 <div class="card">
-  <h2>🍽️ Mess Planner</h2>
+  <h2>⏰ AI Time Planner</h2>
 
-  <select id="meal">
+  <select id="examMode">
+    <option value="yes">📚 Exam Time</option>
+    <option value="no">📅 Normal Days</option>
+  </select>
+
+  <select id="studyType">
+    <option value="morning">🌅 Morning</option>
+    <option value="night">🌙 Night</option>
+  </select>
+
+  <input type="number" id="studyHours" placeholder="Study hours">
+
+  <button onclick="generateSmartSchedule()">Generate Plan</button>
+
+  <pre id="scheduleOutput"></pre>
+
+  <div id="taskSection"></div>
+
+  <div style="background:#333;border-radius:10px;">
+    <div id="progressBar" style="height:10px;background:#00ffcc;width:0%;border-radius:10px;"></div>
+  </div>
+
+  <p id="progressResult"></p>
+</div>
+
+<!-- 🚨 ISSUE SYSTEM -->
+<div class="card">
+  <h2>🚨 Report Issue</h2>
+
+  <input type="text" id="issueLocation" placeholder="Location">
+
+  <select id="issueType">
+    <option>Electricity</option>
+    <option>Cleaning</option>
+    <option>Furniture</option>
+  </select>
+
+  <input type="text" id="issueDesc" placeholder="Describe issue">
+
+  <input type="file" id="issuePhoto">
+
+  <button onclick="submitIssue()">Submit</button>
+
+  <p id="issueResult"></p>
+
+  <img id="preview" width="100" style="display:none">
+
+  <p id="issueStatus"></p>
+
+  <button onclick="markResolved()">Resolved</button>
+</div>
+
+<!-- 🍽️ MESS FEEDBACK -->
+<div class="card">
+  <h2>🍽️ Mess Feedback</h2>
+
+  <input type="text" id="studentName" placeholder="Name">
+
+  <select id="mealType">
     <option>Breakfast</option>
     <option>Lunch</option>
     <option>Dinner</option>
   </select>
 
-  <select id="hunger">
-    <option>Low</option>
-    <option>Medium</option>
-    <option>High</option>
+  <input type="text" id="foodFeedback" placeholder="Feedback">
+
+  <select id="rating">
+    <option value="1">⭐1</option>
+    <option value="2">⭐⭐2</option>
+    <option value="3">⭐⭐⭐3</option>
+    <option value="4">⭐⭐⭐⭐4</option>
+    <option value="5">⭐⭐⭐⭐⭐5</option>
   </select>
 
-  <button onclick="messAI()">Predict</button>
+  <input type="file" id="foodImage">
 
-  <p id="messResult"></p>
+  <button onclick="submitFeedback()">Submit</button>
+
+  <p id="feedbackResult"></p>
+
+  <img id="foodPreview" width="100" style="display:none">
 </div>
 
-<!-- ⚡ Electricity -->
-<div class="card">
-  <h2>⚡ Electricity AI</h2>
-
-  <input type="number" id="people" placeholder="No. of people">
-
-  <select id="device">
-    <option>Light</option>
-    <option>Fan</option>
-    <option>AC</option>
-  </select>
-
-  <select id="time">
-    <option>Morning</option>
-    <option>Evening</option>
-    <option>Night</option>
-  </select>
-
-  <button onclick="electricityAI()">Analyze</button>
-
-  <p id="electricityResult"></p>
-</div>
-
-<!-- 🧺 Laundry -->
-<div class="card">
-  <h2>🧺 Laundry AI</h2>
-
-  <select id="slot">
-    <option>Morning</option>
-    <option>Afternoon</option>
-    <option>Evening</option>
-  </select>
-
-  <select id="urgency">
-    <option>Low</option>
-    <option>Medium</option>
-    <option>High</option>
-  </select>
-
-  <button onclick="laundryAI()">Optimize</button>
-
-  <p id="laundryResult"></p>
-</div>
-
-</div>
-
-<!-- 🤖 Chatbot -->
-<div class="chatbox">
-  <h3>🤖 AI Assistant</h3>
-
-  <input type="text" id="chatInput" placeholder="Ask anything...">
-  <button onclick="chat()">Send</button>
-
-  <p id="chatOutput"></p>
 </div>
 
 <script>
 
-// 🍽️ Mess AI
-function messAI() {
-  let meal = document.getElementById("meal").value;
-  let hunger = document.getElementById("hunger").value;
+// ===== TIME PLANNER (REALISTIC AI) =====
+var totalTasks = 0;
+var completedTasks = 0;
 
-  let result = "Demand Moderate";
+function generateSmartSchedule() {
+  var exam = document.getElementById("examMode").value;
+  var type = document.getElementById("studyType").value;
+  var hours = parseInt(document.getElementById("studyHours").value);
 
-  if (hunger === "High") result = "🔥 High Demand – Increase food";
-  if (hunger === "Low") result = "⚠️ Low Demand – Reduce food";
+  if (!hours || hours <= 0) {
+    document.getElementById("scheduleOutput").innerText = "⚠️ Enter valid study hours";
+    return;
+  }
 
-  document.getElementById("messResult").innerText =
-    meal + ": " + result;
+  var start = (type === "morning") ? 6 : 19;
+  var current = start;
+  var plan = "";
+
+  if (exam === "yes") {
+    plan += "🔥 Exam Mode (Peak Performance Strategy)\n\n";
+  } else {
+    plan += "📘 Normal Mode (Balanced Study)\n\n";
+  }
+
+  plan += formatTime(current)+"-"+formatTime(current+1)+" Warm-up\n";
+  current++;
+
+  for (var i = 1; i < hours; i++) {
+    var next = current + 1;
+    var task = "";
+
+    if (i <= 2) task = "🚀 Deep Focus Study";
+    else if (i <= 4) task = "✍️ Practice";
+    else if (i <= 6) task = "📖 Study + Notes";
+    else task = "🔁 Revision";
+
+    if (exam === "yes" && i % 3 === 0) task = "🧪 Mock Test";
+
+    plan += formatTime(current)+"-"+formatTime(next)+" "+task+"\n";
+
+    if (i % 2 === 0) plan += "☕ Break\n";
+    if (i === Math.floor(hours/2)) plan += "🍽️ Long Break\n";
+
+    current = next;
+  }
+
+  plan += "\n🌙 Final Revision";
+
+  document.getElementById("scheduleOutput").innerText = plan;
+
+  totalTasks = hours;
+  completedTasks = 0;
+
+  var html="";
+  for(var j=1;j<=hours;j++){
+    html+="Task "+j+" <button onclick='markDone()'>✔️</button> <button onclick='markMiss()'>❌</button><br>";
+  }
+  document.getElementById("taskSection").innerHTML=html;
 }
 
-// ⚡ Electricity AI
-function electricityAI() {
-  let people = document.getElementById("people").value;
-  let device = document.getElementById("device").value;
-  let time = document.getElementById("time").value;
+function markDone(){completedTasks++;updateProgress();}
+function markMiss(){updateProgress();}
 
-  let usage = people * (device === "AC" ? 3 : device === "Fan" ? 2 : 1);
-
-  let result = "✅ Efficient";
-
-  if (usage > 6) result = "⚠️ High Usage – Reduce devices";
-  if (time === "Night" && usage > 4) result = "🔥 Peak Usage at Night";
-
-  document.getElementById("electricityResult").innerText = result;
+function updateProgress(){
+  var percent=Math.round((completedTasks/totalTasks)*100);
+  document.getElementById("progressResult").innerText="Progress: "+percent+"%";
+  document.getElementById("progressBar").style.width=percent+"%";
 }
 
-// 🧺 Laundry AI
-function laundryAI() {
-  let slot = document.getElementById("slot").value;
-  let urgency = document.getElementById("urgency").value;
-
-  let suggestion = "Good time";
-
-  if (slot === "Evening") suggestion = "⚠️ Crowded time";
-  if (urgency === "High") suggestion = "🔥 Priority slot recommended";
-
-  document.getElementById("laundryResult").innerText =
-    slot + ": " + suggestion;
+function formatTime(h){
+  var hr=h%24;
+  var suffix=hr>=12?"PM":"AM";
+  hr=hr%12||12;
+  return hr+":00 "+suffix;
 }
 
-// 🤖 Chatbot
-function chat() {
-  let input = document.getElementById("chatInput").value.toLowerCase();
+// ===== ISSUE SYSTEM =====
+function submitIssue(){
+  var type=document.getElementById("issueType").value;
+  var file=document.getElementById("issuePhoto").files[0];
 
-  let output = "I can help with hostel management!";
+  var name= type==="Electricity"?"Ravi Electrician ":type==="Cleaning"?"Suresh Cleaner ":"Amit";
 
-  if (input.includes("mess"))
-    output = "Mess demand depends on student hunger level.";
+  document.getElementById("issueResult").innerText=
+  "Assigned: "+name+" (xxxxxxxxxx)\nWarden: Mr.Sharma (XXXXXXXXXX)";
 
-  else if (input.includes("electricity"))
-    output = "Electricity peaks at night, reduce AC usage.";
+  document.getElementById("issueStatus").innerText="Pending";
 
-  else if (input.includes("laundry"))
-    output = "Morning slots are less crowded.";
+  if(file){
+    var r=new FileReader();
+    r.onload=function(e){
+      document.getElementById("preview").src=e.target.result;
+      document.getElementById("preview").style.display="block";
+    };
+    r.readAsDataURL(file);
+  }
+}
 
-  else if (input.includes("help"))
-    output = "Ask about mess, electricity or laundry!";
+function markResolved(){
+  document.getElementById("issueStatus").innerText="Resolved";
+}
 
-  document.getElementById("chatOutput").innerText = output;
+// ===== MESS =====
+function submitFeedback(){
+  var file=document.getElementById("foodImage").files[0];
+
+  document.getElementById("feedbackResult").innerText="Sent to Mess Incharge";
+
+  if(file){
+    var r=new FileReader();
+    r.onload=function(e){
+      document.getElementById("foodPreview").src=e.target.result;
+      document.getElementById("foodPreview").style.display="block";
+    };
+    r.readAsDataURL(file);
+  }
 }
 
 </script>
 
 </body>
 </html>
+
