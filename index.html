@@ -1,10 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
+
   <title>Smart Hostel AI System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+    #loginPage {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    }
+
     body {
       font-family: 'Poppins', sans-serif;
       margin: 0;
@@ -65,8 +74,25 @@
     }
   </style>
 </head>
-
 <body>
+
+  <div id="loginPage">
+  <div class="card">
+    <h2>🔐 Login</h2>
+
+    <input type="email" id="email" placeholder="Enter Email">
+    <input type="password" id="password" placeholder="Enter Password">
+
+    <button onclick="signup()">Sign Up</button>
+    <button onclick="login()">Login</button>
+    <button onclick="guestLogin()">Continue as Guest</button>
+
+    <p id="loginStatus"></p>
+  </div>
+</div>
+
+
+<div id="mainApp" style="display:none;">
 
 <h1>🚀 Smart Hostel AI System</h1>
 <p>AI-powered productivity & hostel management</p>
@@ -83,8 +109,8 @@
   </select>
 
   <select id="studyType">
-    <option value="morning">🌅 Morning Study</option>
-    <option value="night">🌙 Night Study</option>
+    <option value="morning">🌅 Morning study</option>
+    <option value="night">🌙 Night study</option>
   </select>
 
   <input type="number" id="studyHours" placeholder="Study hours">
@@ -129,6 +155,8 @@
   <button onclick="markResolved()">Resolved</button>
 </div>
 
+
+
 <!-- 🍽️ MESS FEEDBACK -->
 <div class="card">
   <h2>🍽️ Mess Feedback</h2>
@@ -138,6 +166,7 @@
   <select id="mealType">
     <option>Breakfast</option>
     <option>Lunch</option>
+    <option>Evening snack</option>
     <option>Dinner</option>
   </select>
 
@@ -160,69 +189,257 @@
   <img id="foodPreview" width="100" style="display:none">
 </div>
 
+<div class="card">
+  <h2>📊 Issues Dashboard</h2>
+  <button onclick="loadIssues()">Refresh</button>
+  <div id="issueList"></div>
 </div>
 
+<div class="card">
+  <h2>🍽️ Mess Feedback Dashboard</h2>
+  <button onclick="loadFeedback()">Refresh</button>
+  <div id="feedbackList"></div>
+</div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
 <script>
+
+  function generateSmartSchedule(){
+
+  let hours = parseInt(document.getElementById("studyHours").value);
+  let type = document.getElementById("studyType").value;
+  let exam = document.getElementById("examMode").value;
+
+  if(!hours){
+    document.getElementById("scheduleOutput").innerText = "❌ Enter study hours";
+    return;
+  }
+
+  let schedule = "";
+  let current = type === "morning" ? 6 : 18;
+
+  totalTasks = 0;
+  completedTasks = 0;
+
+  schedule += "🧠 Smart Study Plan (Human-like)\n\n";
+
+  for(let i=0; i<hours; i++){
+
+    // Study duration
+    let studyDuration = exam === "yes" ? 60 : 50;
+    let breakDuration = exam === "yes" ? 10 : 15;
+
+    let start = formatTime(current);
+    current += studyDuration / 60;
+
+    let end = formatTime(current);
+
+    schedule += `📚 Study Session ${i+1}: ${start} - ${end}\n`;
+
+    // Realistic suggestion
+    if(i === 0) schedule += "👉 Start with hardest subject\n";
+    else if(i === hours-1) schedule += "👉 Light revision + recap\n";
+    else schedule += "👉 Focus + no distractions\n";
+
+    totalTasks++;
+
+    // Break (skip last)
+    if(i !== hours - 1){
+
+      let breakStart = formatTime(current);
+      current += breakDuration / 60;
+      let breakEnd = formatTime(current);
+
+      schedule += `☕ Break: ${breakStart} - ${breakEnd}\n`;
+
+      // Realistic break suggestion
+      if(exam === "yes"){
+        schedule += "👉 Quick refresh, no phone scrolling\n\n";
+      } else {
+        schedule += "👉 Relax, walk or hydrate\n\n";
+      }
+    }
+  }
+
+  document.getElementById("scheduleOutput").innerText = schedule;
+
+  // Task buttons
+  let taskHTML = "";
+  for(let i=0;i<totalTasks;i++){
+    taskHTML += `
+    <button onclick="markDone()">✅ Done</button>
+    <button onclick="markMiss()">❌ Miss</button><br>`;
+  }
+
+  document.getElementById("taskSection").innerHTML = taskHTML;
+}
+
+  function loadIssues(){
+  db.collection("issues").get().then((querySnapshot)=>{
+
+    let html = "";
+
+    querySnapshot.forEach((doc)=>{
+      let d = doc.data();
+
+      let statusColor = d.status === "Resolved" ? "lime" : "red";
+
+html += `
+<div style="background:#1e1e1e;margin:10px;padding:10px;border-radius:10px;">
+  📍 <b>Location:</b> ${d.location} <br>
+  ⚙️ <b>Type:</b> ${d.type} <br>
+  📝 <b>Description:</b> ${d.description} <br>
+
+  📌 <b>Status:</b> 
+  <span style="color:${statusColor}; font-weight:bold;">
+    ${d.status}
+  </span> <br>
+
+  <button onclick="markResolved('${doc.id}')">✅ Resolve</button>
+</div>`;
+    });
+
+    document.getElementById("issueList").innerHTML = html;
+
+  });
+}
+
+function loadFeedback(){
+  db.collection("feedback").get().then((querySnapshot)=>{
+
+    let html = "";
+
+    querySnapshot.forEach((doc)=>{
+      let d = doc.data();
+
+      html += `
+      <div style="background:#1e1e1e;margin:10px;padding:10px;border-radius:10px;">
+        👤 <b>Name:</b> ${d.name} <br>
+        🍽️ <b>Meal:</b> ${d.meal} <br>
+        📝 <b>Feedback:</b> ${d.feedback} <br>
+        ⭐ <b>Rating:</b> ${d.rating}/5
+      </div>`;
+    });
+
+    document.getElementById("feedbackList").innerHTML = html;
+
+  });
+}
+
+window.onload = function(){
+  loadIssues();
+  loadFeedback();
+}
+
+function loadFeedback(){
+  db.collection("feedback").get().then((querySnapshot)=>{
+
+    let html = "";
+
+    querySnapshot.forEach((doc)=>{
+      let d = doc.data();
+
+      let dateTime = "N/A";
+
+      if(d.time){
+        let dateObj = new Date(d.time.seconds * 1000);
+
+        let date = dateObj.toLocaleDateString();
+        let time = dateObj.toLocaleTimeString();
+
+        dateTime = date + " | " + time;
+      }
+
+      html += `
+      <div style="background:#1e1e1e;margin:10px;padding:10px;border-radius:10px;">
+        👤 <b>Name:</b> ${d.name} <br>
+        🍽️ <b>Meal:</b> ${d.meal} <br>
+        📝 <b>Feedback:</b> ${d.feedback} <br>
+        ⭐ <b>Rating:</b> ${d.rating}/5 <br>
+        📅 <b>Date & Time:</b> ${dateTime}
+      </div>`;
+    });
+
+    document.getElementById("feedbackList").innerHTML = html;
+
+  });
+}
+function markResolved(id){
+
+  db.collection("issues").doc(id).update({
+    status: "Resolved"
+  })
+  .then(()=>{
+    alert("✅ Issue marked as resolved");
+    loadIssues();
+  })
+  .catch((error)=>{
+    console.error(error);
+    alert("❌ Error updating");
+  });
+
+}
+
+  // 🔥 Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyDwryxDbCrkXVYVE3r7iOzdwBF09_5memk",
+  authDomain: "hostel-ai-app.firebaseapp.com",
+  projectId: "hostel-ai-app",
+};
+
+function guestLogin(){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("mainApp").style.display="block";
+}
+
+function signup(){
+  var email = document.getElementById("email").value;
+  var pass = document.getElementById("password").value;
+
+  auth.createUserWithEmailAndPassword(email, pass)
+  .then(()=>{
+    document.getElementById("loginStatus").innerText="✅ Account Created";
+
+    // 🔥 PAGE SWITCH
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("mainApp").style.display="block";
+  })
+  .catch(e=>{
+    document.getElementById("loginStatus").innerText=e.message;
+  });
+}
+
+function login(){
+  var email = document.getElementById("email").value;
+  var pass = document.getElementById("password").value;
+
+  auth.signInWithEmailAndPassword(email, pass)
+  .then(()=>{
+    document.getElementById("loginStatus").innerText="🎉 Login Successful";
+
+    // 🔥 PAGE SWITCH
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("mainApp").style.display="block";
+
+  })
+  .catch(e=>{
+    document.getElementById("loginStatus").innerText=e.message;
+  });
+}
+
+// 🔥 Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
 
 // ===== TIME PLANNER (REALISTIC AI) =====
 var totalTasks = 0;
 var completedTasks = 0;
-
-function generateSmartSchedule() {
-  var exam = document.getElementById("examMode").value;
-  var type = document.getElementById("studyType").value;
-  var hours = parseInt(document.getElementById("studyHours").value);
-
-  if (!hours || hours <= 0) {
-    document.getElementById("scheduleOutput").innerText = "⚠️ Enter valid study hours";
-    return;
-  }
-
-  var start = (type === "morning") ? 6 : 19;
-  var current = start;
-  var plan = "";
-
-  if (exam === "yes") {
-    plan += "🔥 Exam Mode (Peak Performance Strategy)\n\n";
-  } else {
-    plan += "📘 Normal Mode (Balanced Study)\n\n";
-  }
-
-  plan += formatTime(current)+"-"+formatTime(current+1)+" Warm-up\n";
-  current++;
-
-  for (var i = 1; i < hours; i++) {
-    var next = current + 1;
-    var task = "";
-
-    if (i <= 2) task = "🚀 Deep Focus Study";
-    else if (i <= 4) task = "✍️ Practice";
-    else if (i <= 6) task = "📖 Study + Notes";
-    else task = "🔁 Revision";
-
-    if (exam === "yes" && i % 3 === 0) task = "🧪 Mock Test";
-
-    plan += formatTime(current)+"-"+formatTime(next)+" "+task+"\n";
-
-    if (i % 2 === 0) plan += "☕ Break\n";
-    if (i === Math.floor(hours/2)) plan += "🍽️ Long Break\n";
-
-    current = next;
-  }
-
-  plan += "\n🌙 Final Revision";
-
-  document.getElementById("scheduleOutput").innerText = plan;
-
-  totalTasks = hours;
-  completedTasks = 0;
-
-  var html="";
-  for(var j=1;j<=hours;j++){
-    html+="Task "+j+" <button onclick='markDone()'>✔️</button> <button onclick='markMiss()'>❌</button><br>";
-  }
-  document.getElementById("taskSection").innerHTML=html;
-}
 
 function markDone(){completedTasks++;updateProgress();}
 function markMiss(){updateProgress();}
@@ -233,52 +450,101 @@ function updateProgress(){
   document.getElementById("progressBar").style.width=percent+"%";
 }
 
-function formatTime(h){
-  var hr=h%24;
-  var suffix=hr>=12?"PM":"AM";
-  hr=hr%12||12;
-  return hr+":00 "+suffix;
+function formatTime(time){
+
+  let hours = Math.floor(time);
+  let minutes = Math.round((time - hours) * 60);
+
+  if(minutes === 60){
+    hours += 1;
+    minutes = 0;
+  }
+
+  let suffix = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+
+  let minStr = minutes < 10 ? "0" + minutes : minutes;
+
+  return `${hours}:${minStr} ${suffix}`;
 }
 
 // ===== ISSUE SYSTEM =====
-function submitIssue(){
-  var type=document.getElementById("issueType").value;
-  var file=document.getElementById("issuePhoto").files[0];
+  function submitIssue(){
 
-  var name= type==="Electricity"?"Ravi Electrician ":type==="Cleaning"?"Suresh Cleaner ":"Amit";
+  var location = document.getElementById("issueLocation").value;
+  var type = document.getElementById("issueType").value;
+  var desc = document.getElementById("issueDesc").value;
 
-  document.getElementById("issueResult").innerText=
-  "Assigned: "+name+" (xxxxxxxxxx)\nWarden: Mr.Sharma (XXXXXXXXXX)";
+  var file = document.getElementById("issuePhoto").files[0];
+
+  if(!location || !desc){
+    alert("Fill all fields");
+    return;
+  }
+
+  var name = type==="Electricity"?"Ravi":
+             type==="Cleaning"?"Suresh":"Amit";
+
+  // 🔥 Firebase save
+  db.collection("issues").add({
+    location: location,
+    type: type,
+    description: desc,
+    status: "Pending",
+    time: new Date()
+  });
+
+  document.getElementById("issueResult").innerText =
+  "✅ Submitted\nAssigned: "+name+" (99XXXXXXXX)\nWarden: Mr.Sharma (79XXXXXXXX)";
 
   document.getElementById("issueStatus").innerText="Pending";
 
+  // Image preview
   if(file){
-    var r=new FileReader();
-    r.onload=function(e){
-      document.getElementById("preview").src=e.target.result;
-      document.getElementById("preview").style.display="block";
+    var reader = new FileReader();
+    reader.onload = function(e){
+      document.getElementById("preview").src = e.target.result;
+      document.getElementById("preview").style.display = "block";
     };
-    r.readAsDataURL(file);
+    reader.readAsDataURL(file);
   }
-}
-
-function markResolved(){
-  document.getElementById("issueStatus").innerText="Resolved";
-}
+  }
 
 // ===== MESS =====
 function submitFeedback(){
-  var file=document.getElementById("foodImage").files[0];
 
-  document.getElementById("feedbackResult").innerText="Sent to Mess Incharge";
+  var name = document.getElementById("studentName").value;
+  var meal = document.getElementById("mealType").value;
+  var feedback = document.getElementById("foodFeedback").value;
+  var rating = document.getElementById("rating").value;
 
+  var file = document.getElementById("foodImage").files[0];
+
+  if(!name || !feedback){
+    alert("Fill all fields");
+    return;
+  }
+
+  // 🔥 FIREBASE SAVE
+  db.collection("feedback").add({
+    name: name,
+    meal: meal,
+    feedback: feedback,
+    rating: rating,
+    time: new Date()
+  });
+
+  document.getElementById("feedbackResult").innerText =
+  "✅ Feedback Submitted\nSent to Mess Incharge";
+
+  // Image preview
   if(file){
-    var r=new FileReader();
-    r.onload=function(e){
-      document.getElementById("foodPreview").src=e.target.result;
-      document.getElementById("foodPreview").style.display="block";
+    var reader = new FileReader();
+    reader.onload = function(e){
+      document.getElementById("foodPreview").src = e.target.result;
+      document.getElementById("foodPreview").style.display = "block";
     };
-    r.readAsDataURL(file);
+    reader.readAsDataURL(file);
   }
 }
 
@@ -286,4 +552,3 @@ function submitFeedback(){
 
 </body>
 </html>
-
