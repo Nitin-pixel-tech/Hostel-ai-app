@@ -99,9 +99,18 @@
 
 <div class="container">
 
+<div class="card">
+  <h2>🤖 HOSTEL AI ASSISTANT </h2>
+
+  <input type="text" id="chatInput" placeholder="Ask something...">
+  <button onclick="sendMessage()">Send</button>
+
+  <pre id="chatOutput"></pre>
+</div>
+
 <!-- ⏰ TIME PLANNER -->
 <div class="card">
-  <h2>⏰ AI Time Planner</h2>
+  <h2>⏰ Time Planner</h2>
 
   <select id="examMode">
     <option value="yes">📚 Exam Time</option>
@@ -226,7 +235,7 @@
   totalTasks = 0;
   completedTasks = 0;
 
-  schedule += "🧠 Smart Study Plan (Human-like)\n\n";
+  schedule += "🧠 Smart Study Plan \n\n";
 
   for(let i=0; i<hours; i++){
 
@@ -269,18 +278,34 @@
   document.getElementById("scheduleOutput").innerText = schedule;
 
   // Task buttons
-  let taskHTML = "";
-  for(let i=0;i<totalTasks;i++){
-    taskHTML += `
-    <button onclick="markDone()">✅ Done</button>
-    <button onclick="markMiss()">❌ Miss</button><br>`;
-  }
+ let taskHTML = "<div style='display:grid; grid-template-columns:repeat(2,120px); justify-content:center; gap:10px;'>";
 
-  document.getElementById("taskSection").innerHTML = taskHTML;
+for(let i=0;i<totalTasks;i++){
+  taskHTML += `
+    <button onclick="markDone(this)">✅ Done</button>
+    <button onclick="markMiss(this)">❌ Miss</button>
+  `;
 }
 
-  function loadIssues(){
-  db.collection("issues").get().then((querySnapshot)=>{
+taskHTML += "</div>";
+
+document.getElementById("taskSection").innerHTML = taskHTML;
+
+}
+
+ function loadIssues(){
+
+  let user = auth.currentUser;
+
+  if(!user){
+    document.getElementById("issueList").innerHTML = "❌ Login required";
+    return;
+  }
+
+  db.collection("issues")
+  .where("userEmail", "==", user.email)
+  .get()
+  .then((querySnapshot)=>{
 
     let html = "";
 
@@ -289,20 +314,21 @@
 
       let statusColor = d.status === "Resolved" ? "lime" : "red";
 
-html += `
-<div style="background:#1e1e1e;margin:10px;padding:10px;border-radius:10px;">
-  📍 <b>Location:</b> ${d.location} <br>
-  ⚙️ <b>Type:</b> ${d.type} <br>
-  📝 <b>Description:</b> ${d.description} <br>
+      html += `
+      <div style="background:#1e1e1e;margin:10px;padding:10px;border-radius:10px;">
+        📍 ${d.location} <br>
+        ⚙️ ${d.type} <br>
+        📝 ${d.description} <br>
 
-  📌 <b>Status:</b> 
-  <span style="color:${statusColor}; font-weight:bold;">
-    ${d.status}
-  </span> <br>
+        📌 <span style="color:${statusColor};font-weight:bold;">
+          ${d.status}
+        </span><br>
 
-  <button onclick="markResolved('${doc.id}')">✅ Resolve</button>
-</div>`;
+        <button onclick="markResolved('${doc.id}')">✅ Resolve</button>
+      </div>`;
     });
+
+    if(html === "") html = "📭 No issues yet";
 
     document.getElementById("issueList").innerHTML = html;
 
@@ -310,34 +336,18 @@ html += `
 }
 
 function loadFeedback(){
-  db.collection("feedback").get().then((querySnapshot)=>{
 
-    let html = "";
+  let user = auth.currentUser;
 
-    querySnapshot.forEach((doc)=>{
-      let d = doc.data();
+  if(!user){
+    document.getElementById("feedbackList").innerHTML = "❌ Login required";
+    return;
+  }
 
-      html += `
-      <div style="background:#1e1e1e;margin:10px;padding:10px;border-radius:10px;">
-        👤 <b>Name:</b> ${d.name} <br>
-        🍽️ <b>Meal:</b> ${d.meal} <br>
-        📝 <b>Feedback:</b> ${d.feedback} <br>
-        ⭐ <b>Rating:</b> ${d.rating}/5
-      </div>`;
-    });
-
-    document.getElementById("feedbackList").innerHTML = html;
-
-  });
-}
-
-window.onload = function(){
-  loadIssues();
-  loadFeedback();
-}
-
-function loadFeedback(){
-  db.collection("feedback").get().then((querySnapshot)=>{
+  db.collection("feedback")
+  .where("userEmail", "==", user.email)
+  .get()
+  .then((querySnapshot)=>{
 
     let html = "";
 
@@ -348,27 +358,26 @@ function loadFeedback(){
 
       if(d.time){
         let dateObj = new Date(d.time.seconds * 1000);
-
-        let date = dateObj.toLocaleDateString();
-        let time = dateObj.toLocaleTimeString();
-
-        dateTime = date + " | " + time;
+        dateTime = dateObj.toLocaleString();
       }
 
       html += `
       <div style="background:#1e1e1e;margin:10px;padding:10px;border-radius:10px;">
-        👤 <b>Name:</b> ${d.name} <br>
-        🍽️ <b>Meal:</b> ${d.meal} <br>
-        📝 <b>Feedback:</b> ${d.feedback} <br>
-        ⭐ <b>Rating:</b> ${d.rating}/5 <br>
-        📅 <b>Date & Time:</b> ${dateTime}
+        👤 ${d.name} <br>
+        🍽️ ${d.meal} <br>
+        📝 ${d.feedback} <br>
+        ⭐ ${d.rating}/5 <br>
+        📅 ${dateTime}
       </div>`;
     });
+
+    if(html === "") html = "📭 No feedback yet";
 
     document.getElementById("feedbackList").innerHTML = html;
 
   });
 }
+
 function markResolved(id){
 
   db.collection("issues").doc(id).update({
@@ -383,6 +392,58 @@ function markResolved(id){
     alert("❌ Error updating");
   });
 
+}
+
+async function sendMessage(){
+
+  let msg = document.getElementById("chatInput").value;
+
+  if(!msg){
+    alert("Type something!");
+    return;
+  }
+
+  document.getElementById("chatOutput").innerText = "⏳ Thinking...";
+
+  try{
+
+    let response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer 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",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "meta-llama/llama-3-8b-instruct",
+        messages: [
+          {
+            role: "system",
+            content: "You are a smart hostel assistant. Help with study plans, productivity, and hostel issues."
+          },
+          {
+            role: "user",
+            content: msg
+          }
+        ]
+      })
+    });
+
+    let data = await response.json();
+
+    console.log(data); // debug ke liye
+
+    if(data.choices && data.choices.length > 0){
+  document.getElementById("chatOutput").innerText =
+    data.choices[0].message.content;
+} else {
+  document.getElementById("chatOutput").innerText =
+    "❌ Error: " + JSON.stringify(data);
+}
+
+  } catch(e){
+    console.error(e);
+    document.getElementById("chatOutput").innerText = "❌ Error";
+  }
 }
 
   // 🔥 Firebase Config
@@ -441,13 +502,27 @@ const auth = firebase.auth();
 var totalTasks = 0;
 var completedTasks = 0;
 
-function markDone(){completedTasks++;updateProgress();}
-function markMiss(){updateProgress();}
+function markDone(btn){
+  btn.disabled = true;
+  btn.style.opacity = "0.5";
+
+  completedTasks++;
+  updateProgress();
+}
+function markMiss(btn){
+  btn.disabled = true;
+  btn.style.opacity = "0.5";
+
+  updateProgress();
+}
 
 function updateProgress(){
-  var percent=Math.round((completedTasks/totalTasks)*100);
-  document.getElementById("progressResult").innerText="Progress: "+percent+"%";
-  document.getElementById("progressBar").style.width=percent+"%";
+  let percent = Math.round((completedTasks / totalTasks) * 100);
+
+  if(percent > 100) percent = 100;
+
+  document.getElementById("progressResult").innerText = "Progress: " + percent + "%";
+  document.getElementById("progressBar").style.width = percent + "%";
 }
 
 function formatTime(time){
@@ -482,20 +557,28 @@ function formatTime(time){
     return;
   }
 
-  var name = type==="Electricity"?"Ravi":
-             type==="Cleaning"?"Suresh":"Amit";
+  var name = type==="Electricity"?"Ravi electrician":
+             type==="Cleaning"?"Suresh cleaner":"Amit Carpenter";
 
   // 🔥 Firebase save
-  db.collection("issues").add({
-    location: location,
-    type: type,
-    description: desc,
-    status: "Pending",
-    time: new Date()
-  });
+  let user = auth.currentUser;
+
+if(!user){
+  alert("❌ Please login first");
+  return;
+}
+
+db.collection("issues").add({
+  location: location,
+  type: type,
+  description: desc,
+  status: "Pending",
+  time: new Date(),
+  userEmail: user.email // ✅ ADD
+});
 
   document.getElementById("issueResult").innerText =
-  "✅ Submitted\nAssigned: "+name+" (99XXXXXXXX)\nWarden: Mr.Sharma (79XXXXXXXX)";
+  "✅ Submitted\nWork Assigned: "+name+"\n Contact No. (99XXXXXXXX)\nWarden: Mr.Sharma\n contact No. (79XXXXXXXX)";
 
   document.getElementById("issueStatus").innerText="Pending";
 
@@ -511,32 +594,42 @@ function formatTime(time){
   }
 
 // ===== MESS =====
-function submitFeedback(){
+  function submitFeedback(){
+
+  let user = auth.currentUser;
+
+  if(!user){
+    alert("❌ Please login first");
+    return;
+  }
 
   var name = document.getElementById("studentName").value;
   var meal = document.getElementById("mealType").value;
   var feedback = document.getElementById("foodFeedback").value;
   var rating = document.getElementById("rating").value;
 
-  var file = document.getElementById("foodImage").files[0];
-
   if(!name || !feedback){
     alert("Fill all fields");
     return;
   }
 
-  // 🔥 FIREBASE SAVE
   db.collection("feedback").add({
     name: name,
     meal: meal,
     feedback: feedback,
     rating: rating,
-    time: new Date()
+    time: new Date(),
+    userEmail: user.email // ✅ FIXED
+  })
+  .then(()=>{
+    document.getElementById("feedbackResult").innerText =
+    "✅ Feedback Submitted\n Thanks for query\nQuery sent to Mess Incharge";
+  })
+  .catch((e)=>{
+    console.error(e);
+    alert("❌ Error saving data");
   });
-
-  document.getElementById("feedbackResult").innerText =
-  "✅ Feedback Submitted\nSent to Mess Incharge";
-
+}
   // Image preview
   if(file){
     var reader = new FileReader();
@@ -546,7 +639,7 @@ function submitFeedback(){
     };
     reader.readAsDataURL(file);
   }
-}
+
 
 </script>
 
