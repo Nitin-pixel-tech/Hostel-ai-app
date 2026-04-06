@@ -410,8 +410,10 @@ async function sendMessage(){
     let response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": "Bearer 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",
+        "Authorization": "Bearer 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",
         "Content-Type": "application/json"
+        "HTTP-Referer": "http://localhost",
+        "X-Title": "Hostel AI App"
       },
       body: JSON.stringify({
         model: "meta-llama/llama-3-8b-instruct",
